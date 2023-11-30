@@ -8,30 +8,30 @@ This was my first reinforcement learning project, I had previously researched it
 ## Features
 
 - Implementation of the Q-Learning algorithm.
-- Discretization of continuous state space to a discrete state space
+- Discretisation of continuous state space to a discrete state space
 - Comparison of agent performance with a baseline random agent.
 - Adaptive learning rate and exploration decay.
 
 ## Reward Metrics
 
-- Reward Structure: The agent gets a reward of +1 everytime the pole remains upright. The aim is for the pole to remain standing for as long as possible so the rewards accumulate with better performance
-- The learning episode terminates, resetting the environment if:
-    - The pole angle +- 12 degrees from vertical
-    - The cart moves 2.4 units from the center
-    - The maximum steps are reached per episode (which I set at 200)
-- The Q-table stores the estimated rewards for state-action pairs and it gets updated after each action. The algorithm considers the tradeoff between immediate and future reward with the discount factor. 
+- **Reward Structure:** The agent gets a reward of +1 every time the pole remains upright. The aim is for the pole to remain standing for as long as possible so the rewards accumulate with better performance.
+- **Episode Termination:** The learning episode terminates, resetting the environment if:
+  - The pole angle is more than ±12 degrees from vertical.
+  - The cart moves more than 2.4 units from the center.
+  - The maximum steps per episode are reached (set at 200 in this project).
+- **Q-Table:** Stores the estimated rewards for state-action pairs and gets updated after each action. The algorithm considers the tradeoff between immediate and future rewards with the discount factor.
 
 The total episode rewards were used as the evaluation metric, as the agent learns how to get more rewards the total episode rewards increases to the cut off limit (200).
 
 ## Versions
 
-- Version 1 (cartpole_Qlearning_old.py) was a rough version where I was getting to grips with the environment, the problem and the algorithm. Extensive tuning still could only achieve an average improvement of ~+6 episode rewards over the baseline score of 21 rewards per episode - not very good!
+- **Version 1 (cartpole_Qlearning_old.py):** A rough version where I was getting to grips with the environment, the problem, and the algorithm. Extensive tuning still could only achieve an average improvement of ~+6 episode rewards over the baseline score of 21 rewards per episode - not very good!
+- **Version 2 (cartpole_Qlearning.py):** Utilised the scikit-learn KBinsDiscretizer module to split the continuous state space into discrete bins. This allowed the agent to learn far more successfully, regularly meeting the cutoff of 200 rewards per episode after 5000 episodes and achieving an average of +100 over the baseline.
 
-- Version 2 ((cartpole_Qlearning.py)) used a the scikit-learn KBinsDiscretizer module to split the continous state space into discrete bins. This allowed the agent to learn far more successfully with the agent regularly meeting the cut-off of 200 rewards per episode after 5000 episodes and achieving an average of +100 over the baseline.
 
 ## Requirements
 
 - Python 3.10
 - see requirements.txt
 
-
+![2500](https://github.com/trow-land/Reinforcement_Learning/blob/main/videos/2500_episodes.mp4)
