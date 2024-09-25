@@ -65,7 +65,42 @@ class GridWorld:
         plt.title('GridWorld')
         plt.grid(True)
         plt.draw()  # new plot
-        plt.pause(0.5) 
+        plt.pause(0.05) 
+
+
+class QLearningAgent():
+
+    # q learning formula
+
+    def __init__(self, grid_size, alpha = 0.1, gamma = 0.9, espilon = 0.1) -> None:
+        self.alpha = alpha
+        self.gamma = gamma
+        self.espilon = espilon
+
+        # define qtable
+        self.qtable = np.zeros((grid_size, grid_size, 4)) # 2d grid and 4 actions
+        self.actions = ['up', 'down', 'left', 'right']
+
+
+    def choose_action(self, state):
+        # exploration
+        if np.random.rand(0,1) < self.espilon:
+            return np.random.choice(self.actions)
+        else:
+            # exploitation
+            return self.action[np.argmax(self.qtable[state[0], state[1]])]
+
+
+    def update_qtable(self, state, action, reward, next_state):
+        action_index = self.actions.index(action)
+        best_move = np.argmax(self.qtable[next_state[0], next_state[1]])
+
+        # q learning formula
+        self.qtable[state[0], state[1], action_index] += self.alpha * (reward * self.gamma * self.qtable[state[0], state[1], best_move] - self.qtable[state[0], state[1], action_index])
+
+
+    def learning_loop(self):
+        pass
 
 # moving matplotlib
 plt.ion()
@@ -77,8 +112,11 @@ env.add_agents((6, 7), 'prey')
 
 possible_actions = ['up', 'down', 'left', 'right']
 
+steps = 0
+
 # Simulate random movement until prey is caught
-while env.prey[0] != env.predators[0]:
+while True:
+
     prey_move = possible_actions[np.random.randint(0, 4)]  # Random prey move
     predator_move = possible_actions[np.random.randint(0, 4)]  # Random predator move
 
@@ -87,8 +125,13 @@ while env.prey[0] != env.predators[0]:
     env.predators[0] = env.agent_step(env.predators[0], predator_move)
 
     env.visualize_grid_dynamic()
+    steps += 1
 
     #time.sleep(0.5)
+    if env.prey[0] == env.predators[0]:
+        print("The predator caught the prey in ", steps, 'steps')
+        break
+
 
 plt.ioff()
 plt.show()
