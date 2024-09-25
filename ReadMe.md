@@ -33,9 +33,7 @@ The total episode rewards were used as the evaluation metric, as the agent learn
 
 The above figure shows the agents improvement throughout traininng. The exploration decay which dictates the probability of the agent exploiting its knowledge rather than exploring was restricted in the early stage of training to allow the the agent to sufficiently explore and understand its environment.
 
-## Requirements
-- Python 3.10
-- see requirements.txt
+
   
   ![cartpole](https://github.com/trow-land/Machine-Learning/assets/75323342/d0198756-c023-4b41-ac16-a673f18c81f2)
 
