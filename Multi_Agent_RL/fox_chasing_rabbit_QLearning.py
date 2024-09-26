@@ -95,10 +95,10 @@ class QLearningAgent():
         state = (predator_state[0], predator_state[1], prey_state[0], prey_state[1])
         next_state = (next_predator_state[0], next_predator_state[1], prey_state[0], prey_state[1])
 
-        # Best future action
+        # best future action
         best_move = np.argmax(self.qtable[next_state[0], next_state[1], next_state[2], next_state[3]])
 
-        # Q-learning formula
+        # Qlearning formula
         self.qtable[state[0], state[1], state[2], state[3], action] += self.alpha * (
             reward + self.gamma * self.qtable[next_state[0], next_state[1], next_state[2], next_state[3], best_move] -
             self.qtable[state[0], state[1], state[2], state[3], action]
@@ -138,7 +138,7 @@ class QLearningAgent():
 # moving matplotlib
 plt.ion()
 
-g_size = 16
+g_size = 8
 
 # Create environment
 env = GridWorld(size=g_size)
@@ -176,9 +176,9 @@ def qlearning_loop(episodes, max_steps):
 
             predator_state = new_predator_state  # Update predator state
 
-            if episode % 1000 == 0:
-            # Visualise the grid every x steps
-                env.visualise_grid_dynamic(episode)
+            # if episode % 1000 == 0:
+            # # Visualise the grid every x steps
+            #     env.visualise_grid_dynamic(episode)
 
             if new_predator_state == prey_state:
                 pred_caught.append((episode, step + 1))  # Store steps for plotting the learning of the agent
@@ -193,7 +193,7 @@ def qlearning_loop(episodes, max_steps):
 # Start learning loop
 plt.ioff()
 
-qlearning_loop(episodes=10000, max_steps=150)
+qlearning_loop(episodes=2500, max_steps=100)
 
 # extract episode numbers and steps
 episodes = [x[0] for x in pred_caught]
@@ -202,4 +202,7 @@ steps_to_catch = [x[1] for x in pred_caught]
 window_size = 50
 moving_avg = [np.mean(steps_to_catch[max(0, i - window_size):(i + 1)]) for i in range(len(steps_to_catch))]
 plt.plot(episodes, moving_avg)
+plt.xlabel(xlabel="Learning Episodes")
+plt.ylabel(ylabel="Fox steps to catch rabbit")
+plt.title("Fox Learning")
 plt.show()
