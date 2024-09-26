@@ -1,42 +1,108 @@
 import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import time
+import math
 
 
 class GridWorld:
 
     def __init__(self, size=8) -> None:
         self.size = size
-        self.grid = np.zeros((size, size), dtype=int)  # initialised grids where 0 is an empty grid
-        self.predators = []
+        self.grid = np.zeros((size, size), dtype=int)  # initialize grid
+        self.predator = []
         self.prey = []
+
+        # Define the custom colormap
+        self.cmap = colors.ListedColormap(['forestgreen', 'chocolate', 'slategrey'])  # Index 0: green, 1: red, 2: grey
+        self.bounds = [0, 1, 2, 3]  # Define boundaries for colormap
+        self.norm = colors.BoundaryNorm(self.bounds, self.cmap.N)
 
     def add_agents(self, position, agent_type):
         if agent_type == 'predator':
-            self.predators.append(position)
-            self.grid[position[0], position[1]] = 1  # 1 represents the alpha (predator)
+            self.predator = position  # Store predator position
+            self.grid[position[0], position[1]] = 1  # 1 represents the predator
 
         elif agent_type == 'prey':
-            self.prey.append(position)
-            self.grid[position[0], position[1]] = 6  # 2 represents the prey
+            self.prey = position  # Store prey position
+            self.grid[position[0], position[1]] = 2  # 2 represents the prey
 
     def reset_env(self):
-        self.predators = []
-        self.prey = []
         self.grid = np.zeros((self.size, self.size), dtype=int)
-
-
-    def print_grid(self):
-        print(self.grid)
-
+        self.predator = (1, 1)
+        self.prey = (6, 7)
+        self.grid[self.predator[0], self.predator[1]] = 1
+        self.grid[self.prey[0], self.prey[1]] = 2
+        return self.predator, self.prey
 
     def agent_step(self, agent_position, action):
+        x, y = agent_position
+        if action == 'up':
+            y = min(y + 1, self.size - 1)
+        elif action == 'down':
+            y = max(y - 1, 0)
+        elif action == 'left':
+            x = max(x - 1, 0)
+        elif action == 'right':
+            x = min(x + 1, self.size - 1)
+
+        return (x, y)
+
+    def move_prey_randomly(self, prey_state):
+        possible_actions = ['up', 'down', 'left', 'right']
+        action = np.random.choice(possible_actions)
+        prey_position = self.agent_step(prey_state, action)
+        return prey_position
+
+    def visualise_grid_dynamic(self, episode):
+        plt.clf()
+        plt.imshow(self.grid, cmap=self.cmap, norm=self.norm, origin='upper')
+        plt.title(f'Fox and Rabbit : Episode {episode}')
+        plt.axis('off')  # Remove axes for a cleaner look
+        plt.draw()
+        plt.pause(0.005)
+
+
+class QLearningAgent():
+
+    def __init__(self, grid_size, alpha=0.1, gamma=0.9, epsilon=1) -> None:
+        self.grid_size = grid_size
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+
+        # define qtable
+        self.qtable = np.zeros((grid_size, grid_size, 4))  # 2d grid and 4 actions
+        self.actions = ['up', 'down', 'left', 'right']
+
+    def choose_action(self, state):
+        # exploration
+        random_number = np.random.uniform(0, 1)
+        # print(random_number)
+        if random_number < self.epsilon:
+            return np.random.randint(0, 4)  # Return a random action index (0 to 3)
+        else:
+            # exploitation
+            return np.argmax(self.qtable[state[0], state[1]])  # Return the best action index
+
+    def update_qtable(self, state, action, reward, next_state):
+        # action is now always an integer index, so no need for index conversion
+        best_move = np.argmax(self.qtable[next_state[0], next_state[1]])  # Best future action
+
+        # Q-learning formula
+        self.qtable[state[0], state[1], action] += self.alpha * (
+            reward + self.gamma * self.qtable[next_state[0], next_state[1], best_move] -
+            self.qtable[state[0], state[1], action]
+        )
+
+    def agent_step(self, agent_position, action_index):
+        action = self.actions[action_index]  # Map index to action string
         x, y = agent_position
 
         if action == 'up':
             y += 1
-            y = min(y, self.size - 1)
+            y = min(y, self.grid_size - 1)
         elif action == 'down':
             y -= 1
             y = max(y, 0)
@@ -45,94 +111,107 @@ class GridWorld:
             x = max(x, 0)
         elif action == 'right':
             x += 1
-            x = min(x, self.size - 1)
-
-        if self.grid[x, y] != self.grid[agent_position[0], agent_position[1]]:
-            # make the move
-            self.grid[x, y] = self.grid[agent_position[0], agent_position[1]]
-            # reset original position to background colour
-            self.grid[agent_position] = 0
-        else:
-            # agent is at a boundary and hasnt moved
-            pass
+            x = min(x, self.grid_size - 1)
 
         return (x, y)
 
 
-    def visualize_grid_dynamic(self):
-        plt.clf() # clear plot
-        plt.imshow(self.grid, cmap='Pastel1', origin='upper')
-        plt.title('GridWorld')
-        plt.grid(True)
-        plt.draw()  # new plot
-        plt.pause(0.05) 
-
-
-class QLearningAgent():
-
-    # q learning formula
-
-    def __init__(self, grid_size, alpha = 0.1, gamma = 0.9, espilon = 0.1) -> None:
-        self.alpha = alpha
-        self.gamma = gamma
-        self.espilon = espilon
-
-        # define qtable
-        self.qtable = np.zeros((grid_size, grid_size, 4)) # 2d grid and 4 actions
-        self.actions = ['up', 'down', 'left', 'right']
-
-
-    def choose_action(self, state):
-        # exploration
-        if np.random.rand(0,1) < self.espilon:
-            return np.random.choice(self.actions)
+    def get_reward(self, predator_pos, prey_pos, prev_distance):
+        distance = math.dist(predator_pos, prey_pos)
+        if distance == 0:
+            reward = 10  # High reward for catching the prey
+        elif distance < prev_distance:
+            reward = 1  # Small reward for getting closer
         else:
-            # exploitation
-            return self.action[np.argmax(self.qtable[state[0], state[1]])]
+            reward = -1  # Penalty for moving farther away
+        return reward, distance
 
-
-    def update_qtable(self, state, action, reward, next_state):
-        action_index = self.actions.index(action)
-        best_move = np.argmax(self.qtable[next_state[0], next_state[1]])
-
-        # q learning formula
-        self.qtable[state[0], state[1], action_index] += self.alpha * (reward * self.gamma * self.qtable[state[0], state[1], best_move] - self.qtable[state[0], state[1], action_index])
-
-
-    def learning_loop(self):
-        pass
 
 # moving matplotlib
 plt.ion()
 
+g_size = 8
+
 # Create environment
-env = GridWorld(size=8)
+env = GridWorld(size=g_size)
 env.add_agents((1, 1), 'predator')
 env.add_agents((6, 7), 'prey')
 
-possible_actions = ['up', 'down', 'left', 'right']
+agent = QLearningAgent(grid_size=g_size)
 
-steps = 0
+pred_caught = []
 
-# Simulate random movement until prey is caught
-while True:
+def qlearning_loop(episodes, max_steps):
+    # initially just the predator will learn
+    for episode in range(episodes):
+        predator_state, prey_state = env.reset_env()
 
-    prey_move = possible_actions[np.random.randint(0, 4)]  # Random prey move
-    predator_move = possible_actions[np.random.randint(0, 4)]  # Random predator move
+        agent.epsilon = max(0.1, agent.epsilon * 0.995)
 
-    # Move prey and predator
-    env.prey[0] = env.agent_step(env.prey[0], prey_move)
-    env.predators[0] = env.agent_step(env.predators[0], predator_move)
+        prev_distance = math.dist(predator_state, prey_state)  # Track initial distance
 
-    env.visualize_grid_dynamic()
-    steps += 1
 
-    #time.sleep(0.5)
-    if env.prey[0] == env.predators[0]:
-        print("The predator caught the prey in ", steps, 'steps')
-        break
+        for step in range(max_steps):
+            # Clear old prey position from grid
+            env.grid[env.prey[0], env.prey[1]] = 0
+
+            # prey makes a step
+            prey_state = env.move_prey_randomly([env.prey[0], env.prey[1]])
+
+            # Update prey position in the environment
+            env.prey = prey_state
+
+            # Place the prey in the new position
+            env.grid[env.prey[0], env.prey[1]] = 6
+
+            # Agent makes an action based upon the state
+            action = agent.choose_action(predator_state)
+
+            # Clear old predator position from grid
+            env.grid[predator_state[0], predator_state[1]] = 0
+
+            # state gets updated
+            new_predator_state = agent.agent_step(predator_state, action)
+
+            # Place the predator in the new position
+            env.grid[new_predator_state[0], new_predator_state[1]] = 1
+
+            reward, prev_distance = agent.get_reward(new_predator_state, prey_state, prev_distance)
+
+
+            agent.update_qtable(predator_state, action, reward, new_predator_state)  # Update Q-values
+
+            predator_state = new_predator_state  # Update state
+
+            
+
+            #if episode % 1000 == 0:
+            # Visualise the grid
+                #env.visualise_grid_dynamic(episode)
+
+            if new_predator_state == prey_state:
+                #print(f"Predator caught prey in {step + 1} steps!")
+                pred_caught.append((episode , step+1)) # storing episode number and steps to caught
+                break
+            elif step == 99:
+                pred_caught.append((episode , step+1))
+            
+            
+
+
+
+# Start learning loop
 
 
 plt.ioff()
+
+qlearning_loop(episodes=10000, max_steps=100)
+
+# Extract episode numbers and steps
+episodes = [x[0] for x in pred_caught]
+steps_to_catch = [x[1] for x in pred_caught]
+
+window_size = 100
+moving_avg = [np.mean(steps_to_catch[max(0, i - window_size):(i + 1)]) for i in range(len(steps_to_catch))]
+plt.plot(episodes, moving_avg)
 plt.show()
-    
