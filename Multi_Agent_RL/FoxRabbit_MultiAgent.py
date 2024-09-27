@@ -158,14 +158,19 @@ env.add_agents((np.random.randint(0,g_size), np.random.randint(0,g_size)), 'pred
 env.add_agents((np.random.randint(0,g_size), np.random.randint(0,g_size)), 'prey')
 
 fox = QLearningAgent(grid_size=g_size)  # start off with the same hyper params for pred or prey. Will reduce rabbits later because foxes are cunning
-rabbit = QLearningAgent(grid_size=g_size)
+rabbit = QLearningAgent(grid_size=g_size, alpha=0.05)
+
+
 
 pred_caught = []
 
 def qlearning_loop(episodes, max_steps):
     for episode in range(episodes):
         predator_state, prey_state = env.reset_env()
+
         fox.epsilon = max(0.1, fox.epsilon * 0.995)
+        rabbit.epsilon = max(0.1, fox.epsilon * 0.995)
+
         prev_distance = math.dist(predator_state, prey_state)  # Track initial distance
 
         for step in range(max_steps):
@@ -204,9 +209,9 @@ def qlearning_loop(episodes, max_steps):
 
             predator_state = new_predator_state  # Update predator state
 
-            # if episode % 500 == 0:
-            # # Visualise the grid every x steps
-            #     env.visualise_grid_dynamic(episode)
+            if episode % 2500 == 0:
+            # Visualise the grid every x steps
+                env.visualise_grid_dynamic(episode)
 
             if new_predator_state == prey_state:
                 pred_caught.append((episode, step + 1))  # Store steps for plotting the learning of the agent
@@ -221,7 +226,7 @@ def qlearning_loop(episodes, max_steps):
 # Start learning loop
 plt.ioff()
 
-qlearning_loop(episodes=10000, max_steps=150)
+qlearning_loop(episodes=25000, max_steps=150)
 
 # extract episode numbers and steps
 episodes = [x[0] for x in pred_caught]
