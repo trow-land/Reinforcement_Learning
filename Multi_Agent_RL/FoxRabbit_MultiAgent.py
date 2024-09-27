@@ -104,6 +104,8 @@ class QLearningAgent():
             self.qtable[state[0], state[1], state[2], state[3], action]
         )
 
+    
+
     def agent_step(self, agent_position, action_index):
         action = self.actions[action_index]  # Map index to action string
         x, y = agent_position
@@ -124,7 +126,7 @@ class QLearningAgent():
         return (x, y)
 
 
-    def get_reward(self, predator_pos, prey_pos, prev_distance):
+    def get_fox_reward(self, predator_pos, prey_pos, prev_distance):
         distance = math.dist(predator_pos, prey_pos)
         if distance == 0:
             reward = 10  # High reward for catching the prey
@@ -133,50 +135,76 @@ class QLearningAgent():
         else:
             reward = -1  # Penalty for moving farther away
         return reward, distance
+    
+    def get_rabbit_reward(self, predator_pos, prey_pos, prev_distance):
+        distance = math.dist(predator_pos, prey_pos)
+        if distance == 0:
+            reward = -10  # High negative reward for getting caught
+        elif distance < prev_distance:
+            reward = -1  # Small penalty for getting closer
+        else:
+            reward = 1  # Penalty for moving farther away
+        return reward, distance
 
 
 # moving matplotlib
 plt.ion()
 
-g_size = 8
+g_size = 12
 
 # Create environment
 env = GridWorld(size=g_size)
-env.add_agents((1, 1), 'predator')
-env.add_agents((6, 7), 'prey')
+env.add_agents((np.random.randint(0,g_size), np.random.randint(0,g_size)), 'predator')
+env.add_agents((np.random.randint(0,g_size), np.random.randint(0,g_size)), 'prey')
 
-agent = QLearningAgent(grid_size=g_size)
+fox = QLearningAgent(grid_size=g_size)  # start off with the same hyper params for pred or prey. Will reduce rabbits later because foxes are cunning
+rabbit = QLearningAgent(grid_size=g_size)
 
 pred_caught = []
 
 def qlearning_loop(episodes, max_steps):
     for episode in range(episodes):
         predator_state, prey_state = env.reset_env()
-        agent.epsilon = max(0.1, agent.epsilon * 0.995)
+        fox.epsilon = max(0.1, fox.epsilon * 0.995)
         prev_distance = math.dist(predator_state, prey_state)  # Track initial distance
 
         for step in range(max_steps):
+
+
             # move rabbit
             env.grid[env.prey[0], env.prey[1]] = 0
-            prey_state = env.move_prey_randomly([env.prey[0], env.prey[1]])
-            env.prey = prey_state
+
+
+            #prey_state = env.move_prey_randomly([env.prey[0], env.prey[1]])
+            rabbit_action = rabbit.choose_action(predator_state, prey_state)
+            new_prey_state = rabbit.agent_step(prey_state, rabbit_action)
+            env.prey = new_prey_state
             env.grid[env.prey[0], env.prey[1]] = 6
 
+            # calc Rabbit reward and update the Rabbit qtable
+            reward, prev_distance = rabbit.get_rabbit_reward(new_prey_state, prey_state, prev_distance)
+            rabbit.update_qtable(predator_state, rabbit_action, reward, new_prey_state, prey_state)
+            prey_state = new_prey_state
+
+
+
+
+
             # fox chooses its action based upon the state of its position and the rabbits position
-            action = agent.choose_action(predator_state, prey_state)
+            fox_action = fox.choose_action(predator_state, prey_state)
 
             # move fox
             env.grid[predator_state[0], predator_state[1]] = 0
-            new_predator_state = agent.agent_step(predator_state, action)
+            new_predator_state = fox.agent_step(predator_state, fox_action)
             env.grid[new_predator_state[0], new_predator_state[1]] = 1 
 
             # calc reward and update the qtable
-            reward, prev_distance = agent.get_reward(new_predator_state, prey_state, prev_distance)
-            agent.update_qtable(predator_state, action, reward, new_predator_state, prey_state)
+            reward, prev_distance = fox.get_fox_reward(new_predator_state, prey_state, prev_distance)
+            fox.update_qtable(predator_state, fox_action, reward, new_predator_state, prey_state)
 
             predator_state = new_predator_state  # Update predator state
 
-            # if episode % 1000 == 0:
+            # if episode % 500 == 0:
             # # Visualise the grid every x steps
             #     env.visualise_grid_dynamic(episode)
 
@@ -193,7 +221,7 @@ def qlearning_loop(episodes, max_steps):
 # Start learning loop
 plt.ioff()
 
-qlearning_loop(episodes=2500, max_steps=100)
+qlearning_loop(episodes=10000, max_steps=150)
 
 # extract episode numbers and steps
 episodes = [x[0] for x in pred_caught]
