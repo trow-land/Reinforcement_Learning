@@ -178,9 +178,9 @@ def qlearning_loop(episodes, max_steps):
 
             predator_state = new_predator_state  # Update predator state
 
-            # if episode % 1000 == 0:
-            # # Visualise the grid every x steps
-            #     env.visualise_grid_dynamic(episode)
+            if episode % 1000 == 0:
+             # Visualise the grid every x steps
+                env.visualise_grid_dynamic(episode)
 
             if new_predator_state == prey_state:
                 pred_caught.append((episode, step + 1))  # Store steps for plotting the learning of the agent
