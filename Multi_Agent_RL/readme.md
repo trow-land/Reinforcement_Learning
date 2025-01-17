@@ -50,6 +50,8 @@ The simulation includes a dynamic grid visualisation that updates as the predato
 - **Rabbits (Prey):** Represented by the number `2` on the grid.
 - **Grid:** Visualises the positions of the fox and rabbits over the course of the simulation.
 
+![gridworld](https://github.com/trow-land/Reinforcement_Learning/blob/main/Multi_Agent_RL/gridworld.png)
+
 ## Q-Learning Implementation
 
 The agents learn their strategies through **Q-Learning**, a reinforcement learning algorithm. The fox is rewarded for moving closer to the rabbits and penalised for moving farther away. Similarly, the rabbits are rewarded for increasing their distance from the fox and penalised when they are caught.
