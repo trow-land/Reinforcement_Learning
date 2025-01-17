@@ -70,6 +70,10 @@ Where:
 - `α`: Learning rate
 - `γ`: Discount factor
 
+With a single Fox and Rabbit the fox quickly improves towards and optimal policy
+
+![training_graph](https://github.com/trow-land/Reinforcement_Learning/blob/main/Multi_Agent_RL/output.png)
+
 ## Customisation
 
 You can customise the following parameters:
