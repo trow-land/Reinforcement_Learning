@@ -81,8 +81,20 @@ You can customise the following parameters:
 - **Number of rabbits**: Change the number of rabbits in the environment by setting the `num_rabbits` parameter in the `reset_env` function.
 - **Q-Learning Hyperparameters**: Adjust the learning rate (`alpha`), discount factor (`gamma`), and exploration rate (`epsilon`) in the `QLearningAgent` class.
 
+## Fox and Rabbit Learning
+The purpose of this project has been to determine how the cunning fox and hunt x number of rabbits in a simple simulation. Using a single fox with multiple prey has given a few opportunities to disadvantage the rabbits.
+
+1) Initialising the rabbits with a slower learning rate.
+2) Gives the rabbits few learning opportunities
+2) rabbits prefer exploration vs exploiting their knowledge
+
+The below plot demonstrates how the fox learns to effectively hunt the multiple rabbits throughout the training episodes
+
+![multirabbit](https://github.com/trow-land/Reinforcement_Learning/blob/main/Multi_Agent_RL/multi_rabbit.png)
+
 ## Future Enhancements
 
+- **Shared Learning**: Rabbits should be able to share knowledge between training episoed
 - **More complex environments**: Introduce obstacles in the grid that both the fox and rabbits have to navigate around.
 - **Advanced learning algorithms**: Implement more advanced algorithms like Deep Q-Learning (DQN) to improve learning performance.
 - **Multi-agent interactions**: Explore scenarios with multiple foxes (predators), limiting the field of view to encourage cooperation

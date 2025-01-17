@@ -219,7 +219,7 @@ def find_nearest_rabbit(predator_position, rabbit_positions):
 # moving matplotlib
 plt.ion()
 
-g_size = 64
+g_size = 16
 
 # Create environment
 env = GridWorld(size=g_size)
@@ -231,17 +231,21 @@ fox = QLearningAgent(grid_size=g_size)  # start off with the same hyper params f
 
 #rabbit = QLearningAgent(grid_size=g_size, alpha=0.05)
 
-num_rabbits = 18
+num_rabbits = 24
 rabbits = [QLearningAgent(grid_size=g_size, alpha=0.05) for _ in range(num_rabbits)]
 rabbits_caught_steps = {rabbit_id: [] for rabbit_id in range(num_rabbits)}
 
 catch_steps = []  # steps taken to catch rabbit
 rabbits_caught = 0  # number of rabbits caught
 
+rabbits_left_record =[]
+
 def qlearning_loop(episodes, max_steps, rabbits_caught):
 
+    
     for episode in tqdm(range(episodes)):
 
+        rabbits_left_at_episode = num_rabbits
         predator_state, prey_states = env.reset_env(num_rabbits)
 
         fox.epsilon = max(0.1, fox.epsilon * 0.995)
@@ -301,12 +305,13 @@ def qlearning_loop(episodes, max_steps, rabbits_caught):
                         del env.preys[rabbit_id]  # Remove rabbit from the environment
                         rabbits_caught_steps[rabbit_id].append(step + 1)  # Log catch step
                         rabbits_caught += 1
+                        rabbits_left_at_episode -=1
 
                 predator_state = new_predator_state  # Update predator state
 
-                if episode % 500 == 0:
+                #if episode % 1000 == 0:
                 # Visualise the grid every x steps
-                    env.visualise_grid_dynamic(episode)
+                    #env.visualise_grid_dynamic(episode)
 
                 if new_predator_state in env.preys.values():
                     catch_steps.append((episode, step + 1))
@@ -320,39 +325,32 @@ def qlearning_loop(episodes, max_steps, rabbits_caught):
                     break
 
 
+        # At the end of each episode record numbeer of rabbits remaining
+        rabbits_left_record.append(len(env.preys)) 
 
-# if episode % 2500 == 0:
-            # # Visualise the grid every x steps
-            #     env.visualise_grid_dynamic(episode)
+        
+
 
 
 
 # Start learning loop
 plt.ioff()
 
-qlearning_loop(episodes=5000, max_steps=250, rabbits_caught=rabbits_caught)
+
+
+qlearning_loop(episodes=500, max_steps=250, rabbits_caught=rabbits_caught)
+
+
+print(rabbits_left_record)
+
 
 # extract episode numbers and steps
 episodes = [x[0] for x in catch_steps]
 steps_to_catch = [x[1] for x in catch_steps]
 
-# window_size = 50
-# moving_avg = [np.mean(steps_to_catch[max(0, i - window_size):(i + 1)]) for i in range(len(steps_to_catch))]
-# plt.plot(episodes, moving_avg)
-# plt.xlabel(xlabel="Learning Episodes")
-# plt.ylabel(ylabel="Fox steps to catch rabbit")
-# plt.title("Fox Learning")
-# plt.show()
-
-window_size = 50
-plt.figure(figsize=(10, 6))
-
-for rabbit_id, steps in rabbits_caught_steps.items():
-    moving_avg = [np.mean(steps[max(0, i - window_size):(i + 1)]) for i in range(len(steps))]
-    plt.plot(range(len(moving_avg)), moving_avg, label=f'Rabbit {rabbit_id}')
-
-plt.xlabel('Episode')
-plt.ylabel('Average Steps to Catch Rabbit')
-plt.title('Average Steps to Catch Each Rabbit Over Time')
-plt.legend()
+plt.plot(rabbits_left_record)
+plt.xlabel("Episodes")
+plt.ylabel("Rabbits Left at End of Episode")
+plt.title(f"Rabbits Remaining At Episode End \n Gridsize = {g_size} : Number of Rabbits: {num_rabbits}")
 plt.show()
+
